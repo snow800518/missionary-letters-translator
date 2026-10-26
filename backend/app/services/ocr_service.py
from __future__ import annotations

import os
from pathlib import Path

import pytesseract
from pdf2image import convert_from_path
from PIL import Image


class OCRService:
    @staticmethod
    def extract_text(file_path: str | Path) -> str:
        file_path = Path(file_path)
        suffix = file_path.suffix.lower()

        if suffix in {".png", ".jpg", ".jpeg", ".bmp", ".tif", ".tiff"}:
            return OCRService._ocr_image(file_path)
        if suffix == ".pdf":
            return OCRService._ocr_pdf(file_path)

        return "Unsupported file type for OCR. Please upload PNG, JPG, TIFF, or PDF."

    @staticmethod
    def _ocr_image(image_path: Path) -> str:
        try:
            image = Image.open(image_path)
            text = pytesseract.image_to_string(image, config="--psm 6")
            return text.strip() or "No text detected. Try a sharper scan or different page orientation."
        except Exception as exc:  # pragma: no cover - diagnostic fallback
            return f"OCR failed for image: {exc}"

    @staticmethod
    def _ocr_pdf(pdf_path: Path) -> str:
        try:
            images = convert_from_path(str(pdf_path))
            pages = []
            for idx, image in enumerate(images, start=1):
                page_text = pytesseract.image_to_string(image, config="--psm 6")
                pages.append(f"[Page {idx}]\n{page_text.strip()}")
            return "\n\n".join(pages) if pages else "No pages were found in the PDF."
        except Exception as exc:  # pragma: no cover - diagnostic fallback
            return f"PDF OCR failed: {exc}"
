@@ -1,0 +1,23 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from PIL import Image, ImageOps
+
+
+class ImagePreprocessor:
+    @staticmethod
+    def preprocess(path: str | Path) -> str:
+        image_path = Path(path)
+        image = Image.open(image_path)
+
+        if image.mode not in ("L", "RGB", "RGBA"):
+            image = image.convert("RGB")
+
+        processed = ImageOps.grayscale(image)
+        processed = ImageOps.autocontrast(processed)
+
+        output = image_path.with_suffix(".preprocessed.png")
+        processed.save(output)
+        return str(output)

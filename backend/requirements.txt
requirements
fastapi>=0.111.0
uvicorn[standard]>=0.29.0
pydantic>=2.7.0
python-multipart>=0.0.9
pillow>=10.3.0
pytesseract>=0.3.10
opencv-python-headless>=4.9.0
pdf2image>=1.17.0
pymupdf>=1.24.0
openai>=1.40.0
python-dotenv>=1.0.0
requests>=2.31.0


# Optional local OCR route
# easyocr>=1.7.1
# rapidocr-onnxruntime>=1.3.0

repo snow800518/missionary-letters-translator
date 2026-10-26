@@ -1,0 +1,18 @@
+# .gitignore
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.DS_Store
+uploads/
+node_modules/
+frontend/dist/
+frontend/.vite/
