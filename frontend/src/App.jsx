@@ -1,0 +1,103 @@
+from __future__ import annotations
+
+import { useState } from 'react';
+
+export default function App() {
+  const [file, setFile] = useState(null);
+  const [sourceLang, setSourceLang] = useState('en');
+  const [targetLang, setTargetLang] = useState('ko');
+  const [status, setStatus] = useState('');
+  const [ocrText, setOcrText] = useState('');
+  const [translatedText, setTranslatedText] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!file) {
+      setStatus('Please choose a document first.');
+      return;
+    }
+
+    setLoading(true);
+    setStatus('Processing document...');
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('source_lang', sourceLang);
+    formData.append('target_lang', targetLang);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/documents/process', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.detail || 'Processing failed');
+      }
+
+      setOcrText(result.ocr_text || '');
+      setTranslatedText(result.translated_text || '');
+      setStatus('Document processed successfully.');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <h1>Missionary Letters Translator</h1>
+      </header>
+
+      <main className="panel-grid">
+        <section className="panel form-panel">
+          <h2>Upload document</h2>
+          <form onSubmit={handleSubmit}>
+            <label className="field">
+              Document file
+              <input type="file" accept=".png,.jpg,.jpeg,.tif,.tiff,.pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            </label>
+
+            <div className="row">
+              <label className="field half">
+                Source language
+                <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
+                  <option value="en">English</option>
+                  <option value="ko">Korean</option>
+                </select>
+              </label>
+
+              <label className="field half">
+                Target language
+                <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
+                  <option value="ko">Korean</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+            </div>
+
+            <button type="submit" disabled={loading}>
+              {loading ? 'Processing...' : 'Translate document'}
+            </button>
+          </form>
+
+          {status && <p className="status">{status}</p>}
+        </section>
+
+        <section className="panel output-panel">
+          <h2>OCR text</h2>
+          <pre>{ocrText || 'No OCR results yet.'}</pre>
+        </section>
+
+        <section className="panel output-panel">
+          <h2>Translation</h2>
+          <pre>{translatedText || 'No translation yet.'}</pre>
+        </section>
+      </main>
+    </div>
+  );
+}
